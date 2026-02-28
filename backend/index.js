@@ -128,10 +128,7 @@ app.post('/transcribe', upload.single('file'), async (req, res) => {
 
         // 45 second timeout per attempt
         const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(
-            () => reject(new Error('Transcription timeout')),
-            45000
-          )
+          setTimeout(() => reject(new Error('Transcription timeout')), 45000)
         )
 
         transcription = await Promise.race([
@@ -147,9 +144,7 @@ app.post('/transcribe', upload.single('file'), async (req, res) => {
 
         if (attempt < maxRetries) {
           // Wait before retry (exponential backoff)
-          await new Promise((resolve) =>
-            setTimeout(resolve, 1000 * attempt)
-          )
+          await new Promise((resolve) => setTimeout(resolve, 1000 * attempt))
         }
       }
     }
@@ -242,39 +237,36 @@ app.post('/transcribe', upload.single('file'), async (req, res) => {
 })
 
 // Cleanup job for orphaned files (runs every 15 minutes)
-setInterval(
-  () => {
-    const uploadsDir = path.join(__dirname, 'uploads')
-    if (!fs.existsSync(uploadsDir)) return
+setInterval(() => {
+  const uploadsDir = path.join(__dirname, 'uploads')
+  if (!fs.existsSync(uploadsDir)) return
 
-    try {
-      const files = fs.readdirSync(uploadsDir)
-      const now = Date.now()
-      const maxAge = 30 * 60 * 1000 // 30 minutes
+  try {
+    const files = fs.readdirSync(uploadsDir)
+    const now = Date.now()
+    const maxAge = 30 * 60 * 1000 // 30 minutes
 
-      let cleaned = 0
-      files.forEach((file) => {
-        try {
-          const filePath = path.join(uploadsDir, file)
-          const stats = fs.statSync(filePath)
-          if (now - stats.mtimeMs > maxAge) {
-            fs.unlinkSync(filePath)
-            cleaned++
-          }
-        } catch (err) {
-          // Skip files that can't be processed
+    let cleaned = 0
+    files.forEach((file) => {
+      try {
+        const filePath = path.join(uploadsDir, file)
+        const stats = fs.statSync(filePath)
+        if (now - stats.mtimeMs > maxAge) {
+          fs.unlinkSync(filePath)
+          cleaned++
         }
-      })
-
-      if (cleaned > 0) {
-        console.log(`🧹 Cleaned up ${cleaned} old audio files`)
+      } catch (err) {
+        // Skip files that can't be processed
       }
-    } catch (err) {
-      console.error('Cleanup job error:', err.message)
+    })
+
+    if (cleaned > 0) {
+      console.log(`🧹 Cleaned up ${cleaned} old audio files`)
     }
-  },
-  15 * 60 * 1000
-)
+  } catch (err) {
+    console.error('Cleanup job error:', err.message)
+  }
+}, 15 * 60 * 1000)
 // Twilio setup
 // --------------------
 const client = twilio(
@@ -1558,33 +1550,53 @@ app.get('/locations', authenticateToken, async (req, res) => {
 })
 const emergencyTypes = [
   'Police Emergency',
-  'Medical Emergency', 
+  'Medical Emergency',
   'Fire Emergency',
-  'Accident Emergency'
+  'Accident Emergency',
 ]
 // Enhanced emergency creation endpoint with description
 app.post('/emergency/create', authenticateToken, async (req, res) => {
   try {
-    const { type, location, priority = 'Critical', description, latitude, longitude } = req.body
+    const {
+      type,
+      location,
+      priority = 'Critical',
+      description,
+      latitude,
+      longitude,
+    } = req.body
     const userId = req.user?.id || req.user?.user_id
 
-    console.log('Emergency creation request:', { userId, type, location, description, latitude, longitude })
+    console.log('Emergency creation request:', {
+      userId,
+      type,
+      location,
+      description,
+      latitude,
+      longitude,
+    })
 
     // Validate required fields
     const validationErrors = []
-    
+
     if (!type || !type.trim()) {
-      validationErrors.push({ field: 'type', message: 'Emergency type is required' })
+      validationErrors.push({
+        field: 'type',
+        message: 'Emergency type is required',
+      })
     }
-    
+
     if (!location || !location.trim()) {
-      validationErrors.push({ field: 'location', message: 'Location is required' })
+      validationErrors.push({
+        field: 'location',
+        message: 'Location is required',
+      })
     }
 
     if (validationErrors.length > 0) {
       return res.status(400).json({
         error: 'Validation failed',
-        errors: validationErrors
+        errors: validationErrors,
       })
     }
 
@@ -1592,7 +1604,7 @@ app.post('/emergency/create', authenticateToken, async (req, res) => {
     if (!userId) {
       console.error('No user ID found in JWT token')
       return res.status(401).json({
-        error: 'User ID not found in token'
+        error: 'User ID not found in token',
       })
     }
 
@@ -1612,14 +1624,14 @@ app.post('/emergency/create', authenticateToken, async (req, res) => {
     let city = null
     let state = null
     let pincode = null
-     const coordMatch = location.match(/(-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)/)
-    
-  
+    const coordMatch = location.match(/(-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)/)
 
     if (latitude && longitude) {
       try {
-        console.log(`🗺️ Extracting location details from coordinates: ${latitude}, ${longitude}`)
-        
+        console.log(
+          `🗺️ Extracting location details from coordinates: ${latitude}, ${longitude}`
+        )
+
         // Use Groq to extract city, state, and pincode from coordinates
         const locationPrompt = `Given the coordinates: latitude ${latitude}, longitude ${longitude}
         
@@ -1637,12 +1649,13 @@ If you cannot determine any value, use null for that field.`
           messages: [
             {
               role: 'system',
-              content: 'You are a geocoding assistant. Extract location information from coordinates and respond only with valid JSON.'
+              content:
+                'You are a geocoding assistant. Extract location information from coordinates and respond only with valid JSON.',
             },
             {
               role: 'user',
-              content: locationPrompt
-            }
+              content: locationPrompt,
+            },
           ],
           model: 'llama-3.1-8b-instant',
           temperature: 0.1,
@@ -1675,10 +1688,11 @@ If you cannot determine any value, use null for that field.`
           if (userUpdateError) {
             console.error('Failed to update user location:', userUpdateError)
           } else {
-            console.log(`✅ Updated user location: ${city}, ${state}, ${pincode}`)
+            console.log(
+              `✅ Updated user location: ${city}, ${state}, ${pincode}`
+            )
           }
         }
-
       } catch (groqError) {
         console.error('Groq geocoding error:', groqError)
         // Fallback to OpenStreetMap Nominatim if Groq fails
@@ -1687,14 +1701,16 @@ If you cannot determine any value, use null for that field.`
             `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=10`
           )
           const nominatimData = await nominatimResponse.json()
-          
+
           if (nominatimData && nominatimData.address) {
             const address = nominatimData.address
             city = address.city || address.town || address.village || null
             state = address.state || null
             pincode = address.postcode || null
-            
-            console.log(`✅ Fallback location from Nominatim: ${city}, ${state}, ${pincode}`)
+
+            console.log(
+              `✅ Fallback location from Nominatim: ${city}, ${state}, ${pincode}`
+            )
 
             // Update user's location information
             if (city || state || pincode) {
@@ -1723,12 +1739,12 @@ If you cannot determine any value, use null for that field.`
           user_id: userId,
           type: type.trim(),
           location: location.trim(),
-          description: description?.trim() || "none",
+          description: description?.trim() || 'none',
           priority: priority,
           status: 'Reported',
           reported_time: new Date().toISOString(),
           requester_name: `${user.first_name} ${user.last_name}`,
-          requester_phone: user.phone
+          requester_phone: user.phone,
         },
       ])
       .select()
@@ -1742,7 +1758,9 @@ If you cannot determine any value, use null for that field.`
       })
     }
 
-    console.log(`✅ Emergency created: ID ${emergency.id}, Type: ${emergency.type}`)
+    console.log(
+      `✅ Emergency created: ID ${emergency.id}, Type: ${emergency.type}`
+    )
 
     res.json({
       success: true,
@@ -1756,13 +1774,14 @@ If you cannot determine any value, use null for that field.`
         status: emergency.status,
         reported_time: emergency.reported_time,
       },
-      userLocationUpdated: city || state || pincode ? true : false
+      userLocationUpdated: city || state || pincode ? true : false,
     })
   } catch (error) {
     console.error('Error creating emergency:', error)
     res.status(500).json({
       error: 'Failed to create emergency report',
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      details:
+        process.env.NODE_ENV === 'development' ? error.message : undefined,
     })
   }
 })
@@ -2339,64 +2358,6 @@ function parseOpeningHours(openingHours) {
   return null
 }
 
-function getFallbackEmergencyServices(lat, lon) {
-  // Return basic emergency contacts as fallback
-  return [
-    {
-      id: 'emergency_police',
-      name: 'Police Emergency',
-      address: 'India Emergency Services',
-      phone: '100',
-      distance: 0,
-      location: { lat, lng: lon },
-      rating: 'N/A',
-      isOpen: true,
-      types: ['emergency', 'police'],
-      emergency: true,
-    },
-    {
-      id: 'emergency_fire',
-      name: 'Fire Emergency',
-      address: 'India Emergency Services',
-      phone: '101',
-      distance: 0,
-      location: { lat, lng: lon },
-      rating: 'N/A',
-      isOpen: true,
-      types: ['emergency', 'fire_station'],
-      emergency: true,
-    },
-    {
-      id: 'emergency_medical',
-      name: 'Medical Emergency',
-      address: 'India Emergency Services',
-      phone: '108',
-      distance: 0,
-      location: { lat, lng: lon },
-      rating: 'N/A',
-      isOpen: true,
-      types: ['emergency', 'hospital'],
-      emergency: true,
-    },
-  ]
-}
-// Helper function for distance calculation
-function calculateDistance(lat1, lon1, lat2, lon2) {
-  const R = 6371 // Earth's radius in km
-  const dLat = deg2rad(lat2 - lat1)
-  const dLon = deg2rad(lon2 - lon1)
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(deg2rad(lat1)) *
-      Math.cos(deg2rad(lat2)) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2)
-
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-  const distance = R * c
-  return Math.round(distance * 100) / 100 // Round to 2 decimal places
-}
-
 function deg2rad(deg) {
   return deg * (Math.PI / 180)
 }
@@ -2507,75 +2468,93 @@ app.put('/locations/:id', authenticateToken, async (req, res) => {
 })
 
 // Update emergency location continuously
-app.put('/emergency/:emergencyId/update-location', authenticateToken, async (req, res) => {
-  try {
-    const { emergencyId } = req.params
-    const { latitude, longitude } = req.body
-    const userId = req.user?.id || req.user?.user_id
+app.put(
+  '/emergency/:emergencyId/update-location',
+  authenticateToken,
+  async (req, res) => {
+    try {
+      const { emergencyId } = req.params
+      const { latitude, longitude } = req.body
+      const userId = req.user?.id || req.user?.user_id
 
-    // Validate coordinates
-    if (!latitude || !longitude) {
-      return res.status(400).json({ error: 'Latitude and longitude required' })
-    }
+      // Validate coordinates
+      if (!latitude || !longitude) {
+        return res
+          .status(400)
+          .json({ error: 'Latitude and longitude required' })
+      }
 
-    if (latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
-      return res.status(400).json({ error: 'Invalid coordinates' })
-    }
+      if (
+        latitude < -90 ||
+        latitude > 90 ||
+        longitude < -180 ||
+        longitude > 180
+      ) {
+        return res.status(400).json({ error: 'Invalid coordinates' })
+      }
 
-    // Get emergency and verify ownership
-    const { data: emergency, error: fetchError } = await supabase
-      .from('emergencies')
-      .select('user_id, status')
-      .eq('id', emergencyId)
-      .single()
+      // Get emergency and verify ownership
+      const { data: emergency, error: fetchError } = await supabase
+        .from('emergencies')
+        .select('user_id, status')
+        .eq('id', emergencyId)
+        .single()
 
-    if (fetchError || !emergency) {
-      return res.status(404).json({ error: 'Emergency not found' })
-    }
+      if (fetchError || !emergency) {
+        return res.status(404).json({ error: 'Emergency not found' })
+      }
 
-    if (emergency.user_id !== userId) {
-      return res.status(403).json({ error: 'Not authorized' })
-    }
+      if (emergency.user_id !== userId) {
+        return res.status(403).json({ error: 'Not authorized' })
+      }
 
-    // Don't update if resolved
-    const inactiveStatuses = ['Resolved', 'Completed', 'Cancelled', 'Closed', 'resolved']
-    if (inactiveStatuses.includes(emergency.status)) {
-      return res.status(400).json({ 
-        error: 'Emergency already resolved',
-        status: emergency.status,
-        stopTracking: true
-      })
-    }
+      // Don't update if resolved
+      const inactiveStatuses = [
+        'Resolved',
+        'Completed',
+        'Cancelled',
+        'Closed',
+        'resolved',
+      ]
+      if (inactiveStatuses.includes(emergency.status)) {
+        return res.status(400).json({
+          error: 'Emergency already resolved',
+          status: emergency.status,
+          stopTracking: true,
+        })
+      }
 
-    // Update location as comma-separated string
-    const locationString = `${latitude},${longitude}`
-    
-    const { error: updateError } = await supabase
-      .from('emergencies')
-      .update({ 
+      // Update location as comma-separated string
+      const locationString = `${latitude},${longitude}`
+
+      const { error: updateError } = await supabase
+        .from('emergencies')
+        .update({
+          location: locationString,
+          location_updated_at: new Date().toISOString(),
+        })
+        .eq('id', emergencyId)
+
+      if (updateError) {
+        console.error('Location update error:', updateError)
+        return res.status(500).json({ error: 'Failed to update location' })
+      }
+
+      console.log(
+        `Location updated for emergency ${emergencyId}: ${locationString}`
+      )
+
+      res.json({
+        success: true,
         location: locationString,
-        location_updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
       })
-      .eq('id', emergencyId)
-
-    if (updateError) {
-      console.error('Location update error:', updateError)
-      return res.status(500).json({ error: 'Failed to update location' })
+    } catch (error) {
+      console.error('Update emergency location error:', error)
+      res.status(500).json({ error: 'Failed to update location' })
     }
-
-    console.log(`Location updated for emergency ${emergencyId}: ${locationString}`)
-
-    res.json({
-      success: true,
-      location: locationString,
-      updated_at: new Date().toISOString()
-    })
-
-  } catch (error) {
-    console.error('Update emergency location error:', error)
-    res.status(500).json({ error: 'Failed to update location' })
   }
-})
+)
 // POST /call
 // Replace the existing /emergency/call route in your backend index.js
 
@@ -2839,10 +2818,6 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
   return Math.round(distance * 100) / 100 // Round to 2 decimal places
 }
 
-function deg2rad(deg) {
-  return deg * (Math.PI / 180)
-}
-
 // Additional route to get route details (optional - for more detailed routing)
 app.post('/route/details', authenticateToken, async (req, res) => {
   try {
@@ -3034,7 +3009,6 @@ app.post('/get-nearby-services', async (req, res) => {
   }
 })
 
-
 // ===========================================
 // DISPATCH UNIT AUTHENTICATION & MANAGEMENT
 // ===========================================
@@ -3079,15 +3053,27 @@ const dispatchValidation = {
 
   // Validate contact number
   validateContactNumber: (contactNumber) => {
-    const cleaned = contactNumber?.toString().replace(/\D/g, '')
+    if (!contactNumber) {
+      return {
+        isValid: false,
+        cleaned: null,
+        formatted: null,
+        message: 'Contact number is required',
+      }
+    }
+
+    const cleaned = contactNumber.toString().replace(/\D/g, '')
+    const isValid = cleaned.length === 10
+
     return {
-      isValid: cleaned?.length === 10,
-      cleaned: cleaned,
-      formatted: cleaned?.length === 10 ? `+91${cleaned}` : null,
-      message:
-        cleaned?.length !== 10
-          ? 'Contact number must be exactly 10 digits'
-          : null,
+      isValid,
+      cleaned,
+      formatted: isValid ? `+91${cleaned}` : null,
+      message: !isValid
+        ? cleaned.length === 0
+          ? 'Contact number cannot be empty'
+          : 'Contact number must be exactly 10 digits'
+        : null,
     }
   },
 
@@ -3510,12 +3496,11 @@ app.post('/dispatch/resend_otp', async (req, res) => {
 // ===========================================
 
 function authenticateDispatchUnit(req, res, next) {
-  
-const authHeader = req.headers['authorization']
-console.log("Authorization header:", authHeader)
+  const authHeader = req.headers['authorization']
+  console.log('Authorization header:', authHeader)
 
-const token = authHeader && authHeader.split(' ')[1]
-console.log("Extracted token:", token)
+  const token = authHeader && authHeader.split(' ')[1]
+  console.log('Extracted token:', token)
 
   if (!token) {
     return res.status(401).json({
@@ -3665,10 +3650,7 @@ app.post('/dispatch/login', async (req, res) => {
     }
 
     // Verify password
-    const isValidPassword = await bcrypt.compare(
-      password,
-      dispatch.password
-    )
+    const isValidPassword = await bcrypt.compare(password, dispatch.password)
 
     if (!isValidPassword) {
       // Optional: implement failed login attempt tracking
@@ -3720,17 +3702,16 @@ app.post('/dispatch/login', async (req, res) => {
       district: dispatch.district,
       state: dispatch.state,
       login_time: loginTime,
-        officer_in_charge: dispatch.officer_in_charge, // ADD THIS - missing from your current JWT
-  officer_contact: dispatch.officer_contact, // ADD THIS if needed
-  primary_contact:dispatch.contact_number,
-  city:dispatch.city
+      officer_in_charge: dispatch.officer_in_charge, // ADD THIS - missing from your current JWT
+      officer_contact: dispatch.officer_contact, // ADD THIS if needed
+      primary_contact: dispatch.contact_number,
+      city: dispatch.city,
     }
 
     const token = jwt.sign(tokenPayload, process.env.JWT_SECRET, {
       expiresIn: '8d',
       issuer: 'emergency-dispatch-system',
       audience: 'dispatch-units',
-      
     })
 
     console.log(
@@ -3755,9 +3736,9 @@ app.post('/dispatch/login', async (req, res) => {
         contact_number: dispatch.contact_number,
         alternate_contact_number: dispatch.alternate_contact_number,
         officer_in_charge: dispatch.officer_in_charge, // ADD THIS - missing from your current JWT
-  officer_contact: dispatch.officer_contact, // ADD THIS if needed
-  primary_contact:dispatch.contact_number,
-  city:dispatch.city
+        officer_contact: dispatch.officer_contact, // ADD THIS if needed
+        primary_contact: dispatch.contact_number,
+        city: dispatch.city,
       },
       token,
       session: {
@@ -3870,9 +3851,7 @@ app.post('/dispatch/logout', authenticateDispatchUnit, async (req, res) => {
     res.status(500).json({ error: 'Logout failed' })
   }
 })
-app.listen(PORT, () =>
-  console.log(`🚀 Server running on http://localhost:${PORT}`)
-)
+
 // Add these missing routes to your backend/index.js
 
 // ===========================================
@@ -4003,335 +3982,366 @@ app.get('/dispatch/vehicles', authenticateDispatchUnit, async (req, res) => {
 })
 
 // Get request statistics for dispatch dashboard
-app.get('/dispatch/requests/stats', authenticateDispatchUnit, async (req, res) => {
-  try {
-    const { unit_id } = req.user
-    const today = new Date().toISOString().split('T')[0] // YYYY-MM-DD format
+app.get(
+  '/dispatch/requests/stats',
+  authenticateDispatchUnit,
+  async (req, res) => {
+    try {
+      const { unit_id } = req.user
+      const today = new Date().toISOString().split('T')[0] // YYYY-MM-DD format
 
-    // Get pending requests (not yet accepted by any dispatch unit)
-    const { data: pendingRequests, error: pendingError } = await supabase
-      .from('emergencies')
-      .select('id')
-      .eq('status', 'Pending')
-      .is('dispatch_unit_id', null)
+      // Get pending requests (not yet accepted by any dispatch unit)
+      const { data: pendingRequests, error: pendingError } = await supabase
+        .from('emergencies')
+        .select('id')
+        .eq('status', 'Pending')
+        .is('dispatch_unit_id', null)
 
-    if (pendingError) {
-      console.error('Pending requests error:', pendingError)
+      if (pendingError) {
+        console.error('Pending requests error:', pendingError)
+      }
+
+      // Get accepted requests by this unit
+      const { data: acceptedRequests, error: acceptedError } = await supabase
+        .from('emergencies')
+        .select('id')
+        .eq('dispatch_unit_id', unit_id)
+        .in('status', ['Accepted', 'Dispatched', 'En Route', 'On Scene'])
+
+      if (acceptedError) {
+        console.error('Accepted requests error:', acceptedError)
+      }
+
+      // Get completed requests today
+      const { data: completedToday, error: completedError } = await supabase
+        .from('emergencies')
+        .select('id')
+        .eq('dispatch_unit_id', unit_id)
+        .eq('status', 'Completed')
+        .gte('completed_at', today + 'T00:00:00.000Z')
+        .lt('completed_at', today + 'T23:59:59.999Z')
+
+      if (completedError) {
+        console.error('Completed requests error:', completedError)
+      }
+
+      res.json({
+        pending: pendingRequests?.length || 0,
+        accepted: acceptedRequests?.length || 0,
+        completed_today: completedToday?.length || 0,
+      })
+    } catch (err) {
+      console.error('Request stats error:', err)
+      res.status(500).json({ error: 'Failed to fetch request statistics' })
     }
-
-    // Get accepted requests by this unit
-    const { data: acceptedRequests, error: acceptedError } = await supabase
-      .from('emergencies')
-      .select('id')
-      .eq('dispatch_unit_id', unit_id)
-      .in('status', ['Accepted', 'Dispatched', 'En Route', 'On Scene'])
-
-    if (acceptedError) {
-      console.error('Accepted requests error:', acceptedError)
-    }
-
-    // Get completed requests today
-    const { data: completedToday, error: completedError } = await supabase
-      .from('emergencies')
-      .select('id')
-      .eq('dispatch_unit_id', unit_id)
-      .eq('status', 'Completed')
-      .gte('completed_at', today + 'T00:00:00.000Z')
-      .lt('completed_at', today + 'T23:59:59.999Z')
-
-    if (completedError) {
-      console.error('Completed requests error:', completedError)
-    }
-
-    res.json({
-      pending: pendingRequests?.length || 0,
-      accepted: acceptedRequests?.length || 0,
-      completed_today: completedToday?.length || 0,
-    })
-  } catch (err) {
-    console.error('Request stats error:', err)
-    res.status(500).json({ error: 'Failed to fetch request statistics' })
   }
-})
-
+)
 
 // Accept an emergency request
-app.post('/dispatch/requests/:requestId/accept', authenticateDispatchUnit, async (req, res) => {
-  console.log('🟡 [Backend] Accept request route called');
-
-  try {
-    const { requestId } = req.params;
-    const { unit_id } = req.user;
-    const { accepted_by } = req.body;
-
-    // 1️⃣ Find the dispatch request
-    const { data: dispatchReq, error: fetchReqError } = await supabase
-      .from('dispatch_requests')
-      .select('id, emergency_id, status, dispatch_unit_id')
-      .eq('id', requestId)
-      .single();
-
-    if (fetchReqError || !dispatchReq) {
-      console.error('🔴 Dispatch request not found:', fetchReqError);
-      return res.status(404).json({ error: 'Dispatch request not found' });
-    }
-
-    if (dispatchReq.status !== 'Pending') {
-      if (dispatchReq.dispatch_unit_id === unit_id) {
-        return res.json({ 
-          message: 'Request already accepted by your unit',
-          already_accepted: true 
-        });
-      }
-      return res.status(400).json({
-        error: 'This request has already been accepted by another unit',
-        already_accepted: true
-      });
-    }
-
-    // 2️⃣ Find the related emergency
-    const { data: emergency, error: fetchEmergencyError } = await supabase
-      .from('emergencies')
-      .select('*')
-      .eq('id', dispatchReq.emergency_id)
-      .single();
-
-    if (fetchEmergencyError || !emergency) {
-      console.error('🔴 Emergency not found:', fetchEmergencyError);
-      return res.status(404).json({ error: 'Emergency not found' });
-    }
-
-    if (emergency.status === 'Dispatched' || emergency.dispatch_unit_id) {
-      if (emergency.dispatch_unit_id === unit_id) {
-        await supabase
-          .from('dispatch_requests')
-          .update({
-            status: 'Accepted',
-            dispatch_unit_id: unit_id,
-            accepted_at: new Date().toISOString(),
-            accepted_by: accepted_by || 'Dispatch Unit',
-          })
-          .eq('id', requestId);
-          
-        return res.json({ 
-          message: 'Request already accepted by your unit',
-          already_accepted: true 
-        });
-      }
-      return res.status(400).json({
-        error: 'Emergency has already been accepted by another unit',
-        already_accepted: true
-      });
-    }
-
-    // 3️⃣ Get dispatch unit details
-    const { data: dispatchUnit } = await supabase
-      .from('dispatch_units')
-      .select('department_name, unit_type, place, district, contact_number, officer_in_charge')
-      .eq('id', unit_id)
-      .single();
-
-    const currentTime = new Date().toISOString();
-    
-    // Create dispatch service record
-    const dispatchServiceRecord = {
-      service_name: req.user.department_name || 'Unknown Department',
-      service_type: req.user.unit_type || 'Unknown Type',
-      service_id: unit_id,
-      dispatched_at: currentTime,
-      dispatched_by: accepted_by || req.user.officer_in_charge || 'Dispatch Unit',
-      phone: dispatchUnit?.contact_number || req.user.primary_contact || 'N/A',
-      place: dispatchUnit?.place || req.user.city || 'Unknown',
-      district: req.user.district || 'Unknown',
-      status: 'Accepted',
-      unit_id: unit_id
-    };
-
-    console.log('Dispatch service record:', JSON.stringify(dispatchServiceRecord, null, 2));
-
-    // CRITICAL: Parse existing JSONB data properly
-    let existingServices = [];
-    let existingHistory = [];
+app.post(
+  '/dispatch/requests/:requestId/accept',
+  authenticateDispatchUnit,
+  async (req, res) => {
+    console.log('🟡 [Backend] Accept request route called')
 
     try {
-      existingServices = emergency.dispatched_services 
-        ? (typeof emergency.dispatched_services === 'string' 
-            ? JSON.parse(emergency.dispatched_services) 
-            : emergency.dispatched_services)
-        : [];
-      
-      existingHistory = emergency.dispatch_history 
-        ? (typeof emergency.dispatch_history === 'string' 
-            ? JSON.parse(emergency.dispatch_history) 
-            : emergency.dispatch_history)
-        : [];
-    } catch (parseError) {
-      console.error('🔴 Error parsing JSON:', parseError);
-      existingServices = [];
-      existingHistory = [];
-    }
+      const { requestId } = req.params
+      const { unit_id } = req.user
+      const { accepted_by } = req.body
 
-    // Ensure they are arrays
-    if (!Array.isArray(existingServices)) existingServices = [];
-    if (!Array.isArray(existingHistory)) existingHistory = [];
+      // 1️⃣ Find the dispatch request
+      const { data: dispatchReq, error: fetchReqError } = await supabase
+        .from('dispatch_requests')
+        .select('id, emergency_id, status, dispatch_unit_id')
+        .eq('id', requestId)
+        .single()
 
-    console.log('Existing services:', existingServices);
-    console.log('Existing history:', existingHistory);
+      if (fetchReqError || !dispatchReq) {
+        console.error('🔴 Dispatch request not found:', fetchReqError)
+        return res.status(404).json({ error: 'Dispatch request not found' })
+      }
 
-    // Add new service
-    const updatedServices = [...existingServices, dispatchServiceRecord];
-    const updatedHistory = [...existingHistory, dispatchServiceRecord];
-
-    console.log('Updated services:', JSON.stringify(updatedServices, null, 2));
-    console.log('Updated history:', JSON.stringify(updatedHistory, null, 2));
-
-    // 4️⃣ Update emergency - Use JSON.stringify for JSONB fields
-    const { data: updatedEmergency, error: updateEmergencyError } = await supabase
-      .from('emergencies')
-      .update({
-        status: 'Dispatching',
-        dispatch_unit_id: unit_id,
-        accepted_at: currentTime,
-        handled_by: accepted_by || 'Dispatch Unit',
-        dispatched_services: updatedServices,
-        dispatch_history: updatedHistory,
-      })
-      .eq('id', dispatchReq.emergency_id)
-      .eq('status', 'Accepted')
-      .is('dispatch_unit_id', null)
-      .select();
-
-    console.log('Update result:', updatedEmergency);
-    console.log('Update error:', updateEmergencyError);
-
-    if (updateEmergencyError) {
-      console.error('🔴 Failed to update emergency:', updateEmergencyError);
-      return res.status(500).json({ error: 'Failed to update emergency' });
-    }
-
-    if (!updatedEmergency || updatedEmergency.length === 0) {
-      console.log('🔴 No rows updated');
-      return res.status(400).json({
-        error: 'Emergency was just accepted by another unit',
-        already_accepted: true
-      });
-    }
-
-    // 5️⃣ Update dispatch_requests
-    const { error: updateDispatchReqError } = await supabase
-      .from('dispatch_requests')
-      .update({
-        status: 'Accepted',
-        dispatch_unit_id: unit_id,
-        accepted_at: currentTime,
-        accepted_by: accepted_by || 'Dispatch Unit',
-      })
-      .eq('id', requestId);
-
-    if (updateDispatchReqError) {
-      console.error('🔴 Failed to update dispatch request, rolling back');
-      
-      await supabase
-        .from('emergencies')
-        .update({
-          status: 'Reported',
-          dispatch_unit_id: null,
-          accepted_at: null,
-          handled_by: null,
+      if (dispatchReq.status !== 'Pending') {
+        if (dispatchReq.dispatch_unit_id === unit_id) {
+          return res.json({
+            message: 'Request already accepted by your unit',
+            already_accepted: true,
+          })
+        }
+        return res.status(400).json({
+          error: 'This request has already been accepted by another unit',
+          already_accepted: true,
         })
-        .eq('id', dispatchReq.emergency_id);
-        
-      return res.status(500).json({ error: 'Failed to accept request (rollback performed)' });
-    }
+      }
 
-    console.log('Request accepted successfully');
-    res.json({ 
-      message: 'Request accepted successfully', 
-      accepted: true,
-      dispatch_info: dispatchServiceRecord 
-    });
-    
-  } catch (err) {
-    console.error('🔴 Accept request error:', err);
-    res.status(500).json({ error: 'Failed to accept request' });
+      // 2️⃣ Find the related emergency
+      const { data: emergency, error: fetchEmergencyError } = await supabase
+        .from('emergencies')
+        .select('*')
+        .eq('id', dispatchReq.emergency_id)
+        .single()
+
+      if (fetchEmergencyError || !emergency) {
+        console.error('🔴 Emergency not found:', fetchEmergencyError)
+        return res.status(404).json({ error: 'Emergency not found' })
+      }
+
+      if (emergency.status === 'Dispatched' || emergency.dispatch_unit_id) {
+        if (emergency.dispatch_unit_id === unit_id) {
+          await supabase
+            .from('dispatch_requests')
+            .update({
+              status: 'Accepted',
+              dispatch_unit_id: unit_id,
+              accepted_at: new Date().toISOString(),
+              accepted_by: accepted_by || 'Dispatch Unit',
+            })
+            .eq('id', requestId)
+
+          return res.json({
+            message: 'Request already accepted by your unit',
+            already_accepted: true,
+          })
+        }
+        return res.status(400).json({
+          error: 'Emergency has already been accepted by another unit',
+          already_accepted: true,
+        })
+      }
+
+      // 3️⃣ Get dispatch unit details
+      const { data: dispatchUnit } = await supabase
+        .from('dispatch_units')
+        .select(
+          'department_name, unit_type, place, district, contact_number, officer_in_charge'
+        )
+        .eq('id', unit_id)
+        .single()
+
+      const currentTime = new Date().toISOString()
+
+      // Create dispatch service record
+      const dispatchServiceRecord = {
+        service_name: req.user.department_name || 'Unknown Department',
+        service_type: req.user.unit_type || 'Unknown Type',
+        service_id: unit_id,
+        dispatched_at: currentTime,
+        dispatched_by:
+          accepted_by || req.user.officer_in_charge || 'Dispatch Unit',
+        phone:
+          dispatchUnit?.contact_number || req.user.primary_contact || 'N/A',
+        place: dispatchUnit?.place || req.user.city || 'Unknown',
+        district: req.user.district || 'Unknown',
+        status: 'Accepted',
+        unit_id: unit_id,
+      }
+
+      console.log(
+        'Dispatch service record:',
+        JSON.stringify(dispatchServiceRecord, null, 2)
+      )
+
+      // CRITICAL: Parse existing JSONB data properly
+      let existingServices = []
+      let existingHistory = []
+
+      try {
+        existingServices = emergency.dispatched_services
+          ? typeof emergency.dispatched_services === 'string'
+            ? JSON.parse(emergency.dispatched_services)
+            : emergency.dispatched_services
+          : []
+
+        existingHistory = emergency.dispatch_history
+          ? typeof emergency.dispatch_history === 'string'
+            ? JSON.parse(emergency.dispatch_history)
+            : emergency.dispatch_history
+          : []
+      } catch (parseError) {
+        console.error('🔴 Error parsing JSON:', parseError)
+        existingServices = []
+        existingHistory = []
+      }
+
+      // Ensure they are arrays
+      if (!Array.isArray(existingServices)) existingServices = []
+      if (!Array.isArray(existingHistory)) existingHistory = []
+
+      console.log('Existing services:', existingServices)
+      console.log('Existing history:', existingHistory)
+
+      // Add new service
+      const updatedServices = [...existingServices, dispatchServiceRecord]
+      const updatedHistory = [...existingHistory, dispatchServiceRecord]
+
+      console.log('Updated services:', JSON.stringify(updatedServices, null, 2))
+      console.log('Updated history:', JSON.stringify(updatedHistory, null, 2))
+
+      // 4️⃣ Update emergency - Use JSON.stringify for JSONB fields
+      const { data: updatedEmergency, error: updateEmergencyError } =
+        await supabase
+          .from('emergencies')
+          .update({
+            status: 'Dispatching',
+            dispatch_unit_id: unit_id,
+            accepted_at: currentTime,
+            handled_by: accepted_by || 'Dispatch Unit',
+            dispatched_services: updatedServices,
+            dispatch_history: updatedHistory,
+          })
+          .eq('id', dispatchReq.emergency_id)
+          .eq('status', 'Accepted')
+          .is('dispatch_unit_id', null)
+          .select()
+
+      console.log('Update result:', updatedEmergency)
+      console.log('Update error:', updateEmergencyError)
+
+      if (updateEmergencyError) {
+        console.error('🔴 Failed to update emergency:', updateEmergencyError)
+        return res.status(500).json({ error: 'Failed to update emergency' })
+      }
+
+      if (!updatedEmergency || updatedEmergency.length === 0) {
+        console.log('🔴 No rows updated')
+        return res.status(400).json({
+          error: 'Emergency was just accepted by another unit',
+          already_accepted: true,
+        })
+      }
+
+      // 5️⃣ Update dispatch_requests
+      const { error: updateDispatchReqError } = await supabase
+        .from('dispatch_requests')
+        .update({
+          status: 'Accepted',
+          dispatch_unit_id: unit_id,
+          accepted_at: currentTime,
+          accepted_by: accepted_by || 'Dispatch Unit',
+        })
+        .eq('id', requestId)
+
+      if (updateDispatchReqError) {
+        console.error('🔴 Failed to update dispatch request, rolling back')
+
+        await supabase
+          .from('emergencies')
+          .update({
+            status: 'Reported',
+            dispatch_unit_id: null,
+            accepted_at: null,
+            handled_by: null,
+          })
+          .eq('id', dispatchReq.emergency_id)
+
+        return res
+          .status(500)
+          .json({ error: 'Failed to accept request (rollback performed)' })
+      }
+
+      console.log('Request accepted successfully')
+      res.json({
+        message: 'Request accepted successfully',
+        accepted: true,
+        dispatch_info: dispatchServiceRecord,
+      })
+    } catch (err) {
+      console.error('🔴 Accept request error:', err)
+      res.status(500).json({ error: 'Failed to accept request' })
+    }
   }
-});
+)
 
 // Update an emergency request
-app.put('/dispatch/requests/:requestId/update', authenticateDispatchUnit, async (req, res) => {
-  try {
-    const { requestId } = req.params;
-    const { unit_id } = req.user;
-    const { status, response_notes, assigned_vehicle, estimated_arrival, completed_at } = req.body;
+app.put(
+  '/dispatch/requests/:requestId/update',
+  authenticateDispatchUnit,
+  async (req, res) => {
+    try {
+      const { requestId } = req.params
+      const { unit_id } = req.user
+      const {
+        status,
+        response_notes,
+        assigned_vehicle,
+        estimated_arrival,
+        completed_at,
+      } = req.body
 
-    console.log("🔹 Update emergency request:", { requestId, unit_id, status });
+      console.log('🔹 Update emergency request:', {
+        requestId,
+        unit_id,
+        status,
+      })
 
-    // Step 1: Get emergency_id from dispatch_requests
-    const { data: dispatchReq, error: dispatchError } = await supabase
-      .from('dispatch_requests')
-      .select('id, emergency_id, dispatch_unit_id, assigned_vehicle')
-      .eq('id', requestId)
-      .single();
+      // Step 1: Get emergency_id from dispatch_requests
+      const { data: dispatchReq, error: dispatchError } = await supabase
+        .from('dispatch_requests')
+        .select('id, emergency_id, dispatch_unit_id, assigned_vehicle')
+        .eq('id', requestId)
+        .single()
 
-    if (dispatchError || !dispatchReq) {
-      return res.status(404).json({ error: 'Dispatch request not found' });
-    }
-
-    if (dispatchReq.dispatch_unit_id !== unit_id) {
-      return res.status(403).json({ error: 'You can only update requests assigned to your unit' });
-    }
-
-    const emergencyId = dispatchReq.emergency_id;
-    console.log("➡️ emergencyId to update:", emergencyId);
-
-    // Step 2: Update emergencies table
-    const updateData = {
-      status,
-      response_notes,
-      assigned_vehicle,
-      estimated_arrival: estimated_arrival || new Date(Date.now() + 15 * 60 * 1000).toISOString(),
-      completed_at: new Date().toISOString(),
-    };
-
-    if (completed_at && status === 'Completed') {
-      updateData.completed_at = completed_at;
-    }
-
-    const { error: updateError } = await supabase
-      .from('emergencies')
-      .update(updateData)
-      .eq('id', emergencyId);
-
-    if (updateError) {
-      console.error("❌ Error updating emergency:", updateError);
-      return res.status(500).json({ error: 'Failed to update emergency' });
-    }
-
-    console.log("✅ Emergency updated successfully");
-
-    // Step 3: If status is 'Resolved', update dispatch_vehicles table
-    if (status.toLowerCase() === 'resolved' && dispatchReq.assigned_vehicle) {
-      const { error: vehicleError } = await supabase
-        .from('dispatch_vehicles')
-        .update({ status: 'Available' })
-        .eq('vehicle_id', dispatchReq.assigned_vehicle);
-
-      if (vehicleError) {
-        console.error("⚠️ Failed to release vehicle:", vehicleError);
-      } else {
-        console.log(`✅ Vehicle ${dispatchReq.assigned_vehicle} released`);
+      if (dispatchError || !dispatchReq) {
+        return res.status(404).json({ error: 'Dispatch request not found' })
       }
+
+      if (dispatchReq.dispatch_unit_id !== unit_id) {
+        return res
+          .status(403)
+          .json({ error: 'You can only update requests assigned to your unit' })
+      }
+
+      const emergencyId = dispatchReq.emergency_id
+      console.log('➡️ emergencyId to update:', emergencyId)
+
+      // Step 2: Update emergencies table
+      const updateData = {
+        status,
+        response_notes,
+        assigned_vehicle,
+        estimated_arrival:
+          estimated_arrival ||
+          new Date(Date.now() + 15 * 60 * 1000).toISOString(),
+        completed_at: new Date().toISOString(),
+      }
+
+      if (completed_at && status === 'Completed') {
+        updateData.completed_at = completed_at
+      }
+
+      const { error: updateError } = await supabase
+        .from('emergencies')
+        .update(updateData)
+        .eq('id', emergencyId)
+
+      if (updateError) {
+        console.error('❌ Error updating emergency:', updateError)
+        return res.status(500).json({ error: 'Failed to update emergency' })
+      }
+
+      console.log('✅ Emergency updated successfully')
+
+      // Step 3: If status is 'Resolved', update dispatch_vehicles table
+      if (status.toLowerCase() === 'resolved' && dispatchReq.assigned_vehicle) {
+        const { error: vehicleError } = await supabase
+          .from('dispatch_vehicles')
+          .update({ status: 'Available' })
+          .eq('vehicle_id', dispatchReq.assigned_vehicle)
+
+        if (vehicleError) {
+          console.error('⚠️ Failed to release vehicle:', vehicleError)
+        } else {
+          console.log(`✅ Vehicle ${dispatchReq.assigned_vehicle} released`)
+        }
+      }
+
+      res.json({ message: 'Emergency updated successfully' })
+    } catch (err) {
+      console.error('🔥 Update emergency error:', err)
+      res.status(500).json({ error: 'Failed to update emergency' })
     }
-
-    res.json({ message: 'Emergency updated successfully' });
-
-  } catch (err) {
-    console.error('🔥 Update emergency error:', err);
-    res.status(500).json({ error: 'Failed to update emergency' });
   }
-});
-
-
+)
 
 // ===============================
 // BACKEND API ENDPOINTS (Express.js)
@@ -4343,292 +4353,326 @@ app.put('/dispatch/requests/:requestId/update', authenticateDispatchUnit, async 
 // ======================
 
 // GET /dispatch/requests/received - Get dispatch requests for logged-in dispatch unit
-app.get('/dispatch/requests/received', authenticateDispatchUnit, async (req, res) => {
-  try {
-    
-    const { data, error } = await supabase
-      .from('dispatch_requests')
-      .select(`
+app.get(
+  '/dispatch/requests/received',
+  authenticateDispatchUnit,
+  async (req, res) => {
+    try {
+      const { data, error } = await supabase
+        .from('dispatch_requests')
+        .select(
+          `
         *,
         emergencies (
           id, type, location, user_id, status, priority
         )
-      `)
-      .eq('dispatch_unit_id', req.user.unit_id)
-      .in('status', ['Pending'])
-      .order('requested_at', { ascending: true })
+      `
+        )
+        .eq('dispatch_unit_id', req.user.unit_id)
+        .in('status', ['Pending'])
+        .order('requested_at', { ascending: true })
 
-    if (error) throw error
-    
-    // Format the response
-    const formattedRequests = data.map(request => ({
-      id: request.id,
-      emergency_id: request.emergency_id,
-      emergency_type: request.emergency_type,
-      location: request.location,
-      requester_name: request.requester_name,
-      requester_phone: request.requester_phone,
-      priority: request.priority,
-      assigned_vehicle: request.assigned_vehicle,
-      status: request.status,
-      requested_at: request.requested_at,
-      description: request.description,
-      rawData: request
-    }))
-    
-    res.json(formattedRequests)
-  } catch (error) {
-    console.log(error)
-    console.error('Error fetching dispatch requests:', error)
-    res.status(500).json({ error: error.message })
+      if (error) throw error
+
+      // Format the response
+      const formattedRequests = data.map((request) => ({
+        id: request.id,
+        emergency_id: request.emergency_id,
+        emergency_type: request.emergency_type,
+        location: request.location,
+        requester_name: request.requester_name,
+        requester_phone: request.requester_phone,
+        priority: request.priority,
+        assigned_vehicle: request.assigned_vehicle,
+        status: request.status,
+        requested_at: request.requested_at,
+        description: request.description,
+        rawData: request,
+      }))
+
+      res.json(formattedRequests)
+    } catch (error) {
+      console.log(error)
+      console.error('Error fetching dispatch requests:', error)
+      res.status(500).json({ error: error.message })
+    }
   }
-})
+)
 // GET /dispatch/requests/accepted
-app.get('/dispatch/requests/accepted', authenticateDispatchUnit, async (req, res) => {
-  try {
-    const { data, error } = await supabase
-      .from('dispatch_requests')
-      .select(`
+app.get(
+  '/dispatch/requests/accepted',
+  authenticateDispatchUnit,
+  async (req, res) => {
+    try {
+      const { data, error } = await supabase
+        .from('dispatch_requests')
+        .select(
+          `
         *,
         emergencies (
           id, type, location, user_id, status, priority, requester_name, requester_phone,assigned_vehicle,estimated_arrival,completed_at
         )
-      `)
-      .eq('dispatch_unit_id', req.user.unit_id)
-      .in('status', ['Accepted','Dispatched'])
-      .order('requested_at', { ascending: true });
+      `
+        )
+        .eq('dispatch_unit_id', req.user.unit_id)
+        .in('status', ['Accepted', 'Dispatched'])
+        .order('requested_at', { ascending: true })
 
-    if (error) throw error;
+      if (error) throw error
 
-    // Update emergencies table with requester_name & requester_phone if missing
-    for (const request of data) {
-      if (request.requester_name && request.requester_phone) {
-        await supabase
-          .from('emergencies')
-          .update({
-            requester_name: request.requester_name,
-            requester_phone: request.requester_phone
-          })
-          .eq('id', request.emergency_id);
+      // Update emergencies table with requester_name & requester_phone if missing
+      for (const request of data) {
+        if (request.requester_name && request.requester_phone) {
+          await supabase
+            .from('emergencies')
+            .update({
+              requester_name: request.requester_name,
+              requester_phone: request.requester_phone,
+            })
+            .eq('id', request.emergency_id)
+        }
       }
+
+      // Format the response
+      const formattedRequests = data.map((request) => ({
+        id: request.id,
+        emergency_id: request.emergency_id,
+        emergency_type: request.emergency_type,
+        location: request.location,
+        requester_name: request.requester_name,
+        requester_phone: request.requester_phone,
+        priority: request.priority,
+        assigned_vehicle: request.emergencies?.assigned_vehicle,
+        status: request.emergencies?.status,
+        requested_at: request.requested_at,
+        description: request.description,
+        completed_at: request.emergencies?.completed_at,
+        rawData: request,
+      }))
+
+      res.json(formattedRequests)
+    } catch (error) {
+      console.error('Error fetching dispatch requests:', error)
+      res.status(500).json({ error: error.message })
     }
-
-    // Format the response
-    const formattedRequests = data.map(request => ({
-      id: request.id,
-      emergency_id: request.emergency_id,
-      emergency_type: request.emergency_type,
-      location: request.location,
-      requester_name: request.requester_name,
-      requester_phone: request.requester_phone,
-      priority: request.priority,
-      assigned_vehicle: request.emergencies?.assigned_vehicle,
-      status: request.emergencies?.status,
-      requested_at: request.requested_at,
-      description: request.description,
-      completed_at:request.emergencies?.completed_at,
-      rawData: request
-    }));
-
-    res.json(formattedRequests);
-  } catch (error) {
-    console.error('Error fetching dispatch requests:', error);
-    res.status(500).json({ error: error.message });
   }
-});
-
-
-
+)
 
 // POST /dispatch/requests/:id/accept - Accept a dispatch request
-app.post('/dispatch/requests/:id/accept', authenticateDispatchUnit, async (req, res) => {
-  try {
-    const requestId = req.params.id
-    const { accepted_by } = req.body
+app.post(
+  '/dispatch/requests/:id/accept',
+  authenticateDispatchUnit,
+  async (req, res) => {
+    try {
+      const requestId = req.params.id
+      const { accepted_by } = req.body
 
-    // Update the dispatch request
-    const { data, error } = await supabase
-      .from('dispatch_requests')
-      .update({
-        status: 'Accepted',
-        accepted_at: new Date().toISOString(),
-        accepted_by: accepted_by || req.user.officer_name,
-      })
-      .eq('id', requestId)
-      .eq('status', 'Pending') // Only accept if still pending
-      .select()
+      // Update the dispatch request
+      const { data, error } = await supabase
+        .from('dispatch_requests')
+        .update({
+          status: 'Accepted',
+          accepted_at: new Date().toISOString(),
+          accepted_by: accepted_by || req.user.officer_name,
+        })
+        .eq('id', requestId)
+        .eq('status', 'Pending') // Only accept if still pending
+        .select()
 
-    if (error) throw error
+      if (error) throw error
 
-    if (!data || data.length === 0) {
-      return res.status(400).json({ error: 'Request not found or already accepted' })
+      if (!data || data.length === 0) {
+        return res
+          .status(400)
+          .json({ error: 'Request not found or already accepted' })
+      }
+
+      // Update dispatch unit response count
+      await supabase
+        .from('dispatch_units')
+        .update({
+          response_count: req.user.response_count + 1,
+        })
+        .eq('id', req.user.id)
+
+      res.json({ success: true, data: data[0] })
+    } catch (error) {
+      console.error('Error accepting request:', error)
+      res.status(500).json({ error: error.message })
     }
-
-    // Update dispatch unit response count
-    await supabase
-      .from('dispatch_units')
-      .update({
-        response_count: req.user.response_count + 1
-      })
-      .eq('id', req.user.id)
-
-    res.json({ success: true, data: data[0] })
-  } catch (error) {
-    console.error('Error accepting request:', error)
-    res.status(500).json({ error: error.message })
   }
-})
+)
 
 // PUT /dispatch/requests/:id/update - Update dispatch request status
-app.put('/dispatch/requests/:id/update', authenticateDispatchUnit, async (req, res) => {
-  try {
-    const requestId = req.params.id
-    const { status,  assigned_vehicle } = req.body
+app.put(
+  '/dispatch/requests/:id/update',
+  authenticateDispatchUnit,
+  async (req, res) => {
+    try {
+      const requestId = req.params.id
+      const { status, assigned_vehicle } = req.body
 
-    const updateData = {
-      assigned_vehicle,
-      status    
-      
+      const updateData = {
+        assigned_vehicle,
+        status,
+      }
+
+      if (status === 'Completed') {
+        updateData.completed_at = new Date().toISOString()
+      }
+
+      const { data, error } = await supabase
+        .from('emergencies')
+        .update(updateData)
+        .eq('id', requestId)
+        .select()
+
+      if (error) throw error
+
+      res.json({ success: true, data: data[0] })
+    } catch (error) {
+      console.error('Error updating request:', error)
+      res.status(500).json({ error: error.message })
     }
-
-    if (status === 'Completed') {
-      updateData.completed_at = new Date().toISOString()
-    }
-
-    const { data, error } = await supabase
-      .from('emergencies')
-      .update(updateData)
-      .eq('id', requestId)
-      .select()
-
-    if (error) throw error
-
-    res.json({ success: true, data: data[0] })
-  } catch (error) {
-    console.error('Error updating request:', error)
-    res.status(500).json({ error: error.message })
   }
-})
+)
 
 // POST /dispatch/send-message - Send message to admin
-app.post('/dispatch/send-message', authenticateDispatchUnit, async (req, res) => {
-  try {
-    const { emergency_id, message, message_type = 'dispatch_to_admin' } = req.body
-    
-    if (!emergency_id || !message) {
-      return res.status(400).json({ error: 'Emergency ID and message are required' })
-    }
-
-    console.log("🔹 Incoming send-message request:", { emergency_id, message, unit: req.user.unit_id })
-
-    // 1. Fetch admin_id from emergencies table
-    const { data: emergency, error: fetchError } = await supabase
-      .from('emergencies')
-      .select('admin_id')
-      .eq('id', emergency_id)
-      .single()
-
-    if (fetchError || !emergency) {
-      console.error("⚠️ Could not fetch emergency:", fetchError)
-      return res.status(404).json({ error: 'Emergency not found' })
-    }
-
-    console.log("✅ Found admin_id:", emergency.admin_id)
-
-    // 2. Insert message including admin_id
-    const { data, error } = await supabase
-      .from('dispatch_messages')
-      .insert({
+app.post(
+  '/dispatch/send-message',
+  authenticateDispatchUnit,
+  async (req, res) => {
+    try {
+      const {
         emergency_id,
-        dispatch_unit_id: req.user.unit_id,
-        admin_id: emergency.admin_id,   // <-- added here
-        message: message.trim(),
-        message_type,
-        sent_by: req.user.officer_in_charge,
-        sent_at: new Date().toISOString(),
+        message,
+        message_type = 'dispatch_to_admin',
+      } = req.body
+
+      if (!emergency_id || !message) {
+        return res
+          .status(400)
+          .json({ error: 'Emergency ID and message are required' })
+      }
+
+      console.log('🔹 Incoming send-message request:', {
+        emergency_id,
+        message,
+        unit: req.user.unit_id,
       })
-      .select()
 
-    if (error) {
-      console.error("❌ Insert message error:", error)
-      throw error
+      // 1. Fetch admin_id from emergencies table
+      const { data: emergency, error: fetchError } = await supabase
+        .from('emergencies')
+        .select('admin_id')
+        .eq('id', emergency_id)
+        .single()
+
+      if (fetchError || !emergency) {
+        console.error('⚠️ Could not fetch emergency:', fetchError)
+        return res.status(404).json({ error: 'Emergency not found' })
+      }
+
+      console.log('✅ Found admin_id:', emergency.admin_id)
+
+      // 2. Insert message including admin_id
+      const { data, error } = await supabase
+        .from('dispatch_messages')
+        .insert({
+          emergency_id,
+          dispatch_unit_id: req.user.unit_id,
+          admin_id: emergency.admin_id, // <-- added here
+          message: message.trim(),
+          message_type,
+          sent_by: req.user.officer_in_charge,
+          sent_at: new Date().toISOString(),
+        })
+        .select()
+
+      if (error) {
+        console.error('❌ Insert message error:', error)
+        throw error
+      }
+
+      res.json({ success: true, data: data[0] })
+    } catch (error) {
+      console.error('Error sending message:', error)
+      res.status(500).json({ error: error.message })
     }
-    
-    res.json({ success: true, data: data[0] })
-  } catch (error) {
-    console.error('Error sending message:', error)
-    res.status(500).json({ error: error.message })
   }
-})
-
+)
 
 // GET /dispatch/requests/stats - Get request statistics
-app.get('/dispatch/requests/stats', authenticateDispatchUnit, async (req, res) => {
-  try {
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
+app.get(
+  '/dispatch/requests/stats',
+  authenticateDispatchUnit,
+  async (req, res) => {
+    try {
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
 
-    // Get pending requests count
-    const { count: pending } = await supabase
-      .from('dispatch_requests')
-      .select('*', { count: 'exact', head: true })
-      .eq('dispatch_unit_id', req.user.unit_id)
-      .eq('status', 'Pending')
+      // Get pending requests count
+      const { count: pending } = await supabase
+        .from('dispatch_requests')
+        .select('*', { count: 'exact', head: true })
+        .eq('dispatch_unit_id', req.user.unit_id)
+        .eq('status', 'Pending')
 
-    // Get accepted requests count
-    const { count: accepted } = await supabase
-      .from('dispatch_requests')
-      .select('*', { count: 'exact', head: true })
-      .eq('dispatch_unit_id', req.user.id)
-      .in('status', ['Accepted', 'En Route', 'On Scene'])
+      // Get accepted requests count
+      const { count: accepted } = await supabase
+        .from('dispatch_requests')
+        .select('*', { count: 'exact', head: true })
+        .eq('dispatch_unit_id', req.user.id)
+        .in('status', ['Accepted', 'En Route', 'On Scene'])
 
-    // Get completed today count
-    const { count: completed_today } = await supabase
-      .from('dispatch_requests')
-      .select('*', { count: 'exact', head: true })
-      .eq('dispatch_unit_id', req.user.unit_id)
-      .eq('status', 'Completed')
-      .gte('completed_at', today.toISOString())
+      // Get completed today count
+      const { count: completed_today } = await supabase
+        .from('dispatch_requests')
+        .select('*', { count: 'exact', head: true })
+        .eq('dispatch_unit_id', req.user.unit_id)
+        .eq('status', 'Completed')
+        .gte('completed_at', today.toISOString())
 
-    res.json({
-      pending: pending || 0,
-      accepted: accepted || 0,
-      completed_today: completed_today || 0
-    })
-  } catch (error) {
-    console.error('Error fetching stats:', error)
-    res.status(500).json({ error: error.message })
+      res.json({
+        pending: pending || 0,
+        accepted: accepted || 0,
+        completed_today: completed_today || 0,
+      })
+    } catch (error) {
+      console.error('Error fetching stats:', error)
+      res.status(500).json({ error: error.message })
+    }
   }
-})
+)
 
 // 2. ADMIN ENDPOINTS
 // ==================
-
-// GET /admin/messages - Get messages from dispatch units
 // GET /admin/messages - Fetch messages sent to admin
 app.get('/admin/messages', authenticateAdmin, async (req, res) => {
   try {
-    console.log("🔹 [ADMIN] Fetching messages for admin:", req.user?.admin_id)
+    console.log('🔹 [ADMIN] Fetching messages for admin:', req.user?.admin_id)
 
     const { data, error } = await supabase
       .from('dispatch_messages')
-      .select(`
+      .select(
+        `
         *,
         emergencies (id, type, location, user_id),
         dispatch_units (unit_type, officer_in_charge, department_name)
-      `)
+      `
+      )
       .eq('message_type', 'dispatch_to_admin')
       .order('sent_at', { ascending: false })
       .limit(50) // Limit to recent 50 messages
 
     if (error) {
-      console.error("❌ [ADMIN] Supabase query error:", error)
+      console.error('❌ [ADMIN] Supabase query error:', error)
       throw error
     }
 
     console.log(`✅ [ADMIN] Retrieved ${data?.length || 0} messages`)
     if (data && data.length > 0) {
-      console.log("📌 Sample message:", JSON.stringify(data[0], null, 2))
+      console.log('📌 Sample message:', JSON.stringify(data[0], null, 2))
     }
 
     res.json(data)
@@ -4637,7 +4681,6 @@ app.get('/admin/messages', authenticateAdmin, async (req, res) => {
     res.status(500).json({ error: error.message })
   }
 })
-
 
 // PUT /admin/messages/:id/read - Mark message as read
 app.put('/admin/messages/:id/read', authenticateAdmin, async (req, res) => {
@@ -4665,7 +4708,7 @@ app.put('/admin/messages/:id/read', authenticateAdmin, async (req, res) => {
 app.post('/admin/send-message', authenticateAdmin, async (req, res) => {
   try {
     const { emergency_id, dispatch_unit_id, message } = req.body
-    
+
     if (!emergency_id || !dispatch_unit_id || !message) {
       return res.status(400).json({ error: 'All fields are required' })
     }
@@ -4714,28 +4757,6 @@ app.get('/user/emergency-tracking', authenticateUserToken, async (req, res) => {
 // 4. MIDDLEWARE FUNCTIONS
 // =======================
 
-// Authentication middleware for dispatch tokens
-function authenticateDispatchUnit(req, res, next) {
-  try {
-    const token = req.headers.authorization?.split(' ')[1]
-    if (!token) {
-      return res.status(401).json({ error: 'No token provided' })
-    }
-
-    // Verify and decode the dispatch token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET)
-    
-    if (decoded.type !== 'dispatch') {
-      return res.status(403).json({ error: 'Invalid token type' })
-    }
-    
-    req.user = decoded
-    next()
-  } catch (error) {
-    return res.status(401).json({ error: 'Invalid token' })
-  }
-}
-
 // Authentication middleware for admin tokens
 function authenticateAdminToken(req, res, next) {
   try {
@@ -4745,11 +4766,11 @@ function authenticateAdminToken(req, res, next) {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET)
-    
+
     if (decoded.type !== 'admin') {
       return res.status(403).json({ error: 'Invalid token type' })
     }
-    
+
     req.user = decoded
     next()
   } catch (error) {
@@ -4766,11 +4787,11 @@ function authenticateUserToken(req, res, next) {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET)
-    
+
     if (decoded.type !== 'user') {
       return res.status(403).json({ error: 'Invalid token type' })
     }
-    
+
     req.user = decoded
     next()
   } catch (error) {
@@ -4785,7 +4806,7 @@ function authenticateUserToken(req, res, next) {
 app.post('/webhook/emergency-update', async (req, res) => {
   try {
     const { emergency_id, status, dispatch_unit_id, vehicle_id } = req.body
-    
+
     // Update emergency status
     const { error } = await supabase
       .from('emergencies')
@@ -4793,18 +4814,27 @@ app.post('/webhook/emergency-update', async (req, res) => {
         status,
         assigned_vehicle: vehicle_id,
         dispatch_unit_id,
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
       })
       .eq('id', emergency_id)
 
     if (error) throw error
-    
+
     // You could add WebSocket broadcasting here for real-time updates
     // io.emit('emergency_update', { emergency_id, status, vehicle_id })
-    
+
     res.json({ success: true })
   } catch (error) {
     console.error('Webhook error:', error)
     res.status(500).json({ error: error.message })
   }
 })
+if (require.main === module && process.env.NODE_ENV !== 'test') {
+  const PORT = process.env.PORT || 8000
+  app.listen(PORT, () => {
+    console.log(`🚀 Server running on http://localhost:${PORT}`)
+  })
+}
+
+// Always export app for testing
+module.exports = app
