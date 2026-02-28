@@ -1,7 +1,9 @@
+import API_URL from '../config';
+
 const request = require('supertest')
 
 describe('Dispatch Unit Integration Tests', () => {
-  const testBaseURL = 'http://localhost:8000'
+  const testBaseURL = '${API_URL}'
   let dispatchToken
   let testRequestId
 

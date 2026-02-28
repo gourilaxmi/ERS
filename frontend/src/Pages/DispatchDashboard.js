@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import './DispatchDashboard.css'
 import { supabase } from '../supabaseClient'
+import API_URL from '../config';
+
 function DispatchDashboard() {
   const [currentTime, setCurrentTime] = useState(new Date())
   const [dispatchData, setDispatchData] = useState(null)
@@ -72,7 +74,7 @@ const [sendingMessage, setSendingMessage] = useState(false)
         return
       }
 
-      const res = await fetch('http://localhost:8000/dispatch/profile/me', {
+      const res = await fetch('${API_URL}/dispatch/profile/me', {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -107,7 +109,7 @@ const [sendingMessage, setSendingMessage] = useState(false)
       const token = localStorage.getItem("dispatchToken") || localStorage.getItem('token')
       
       // Load vehicle statistics
-      const vehiclesRes = await fetch('http://localhost:8000/dispatch/vehicles', {
+      const vehiclesRes = await fetch('${API_URL}/dispatch/vehicles', {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -118,7 +120,7 @@ const [sendingMessage, setSendingMessage] = useState(false)
       const onDutyVehicles = vehiclesData.filter(v => v.status === 'On Duty').length
 
       // Load request statistics
-      const requestsRes = await fetch('http://localhost:8000/dispatch/requests/stats', {
+      const requestsRes = await fetch('${API_URL}/dispatch/requests/stats', {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -145,7 +147,7 @@ const [sendingMessage, setSendingMessage] = useState(false)
 
     console.log('[DEBUG] Fetching received requests with token:', token);
 
-    const res = await fetch('http://localhost:8000/dispatch/requests/received', {
+    const res = await fetch('${API_URL}/dispatch/requests/received', {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -189,7 +191,7 @@ const [sendingMessage, setSendingMessage] = useState(false)
     console.log('🟡 [Frontend] Loading accepted requests...')
     const token = localStorage.getItem("dispatchToken") || localStorage.getItem("token");
 
-    const res = await fetch('http://localhost:8000/dispatch/requests/accepted', {
+    const res = await fetch('${API_URL}/dispatch/requests/accepted', {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -233,7 +235,7 @@ console.log('[DEBUG] Processing request:', data.id, data);
     try {
       const token = localStorage.getItem("dispatchToken") || localStorage.getItem('token')
 
-      const res = await fetch('http://localhost:8000/dispatch/vehicles', {
+      const res = await fetch('${API_URL}/dispatch/vehicles', {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -277,7 +279,7 @@ const handleAcceptRequest = async (requestId) => {
     }
     console.log('🔵 [Frontend] Request payload:', requestPayload)
 
-    const acceptRes = await fetch(`http://localhost:8000/dispatch/requests/${requestId}/accept`, {
+    const acceptRes = await fetch(`${API_URL}/dispatch/requests/${requestId}/accept`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -374,7 +376,7 @@ const handleAssignVehicle = async (requestId) => {
       .eq('vehicle_id', selectedVehicleId)
 
     // Update dispatch request
-    await fetch(`http://localhost:8000/dispatch/requests/${requestId}/update`, {
+    await fetch(`${API_URL}/dispatch/requests/${requestId}/update`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -417,7 +419,7 @@ const handleSendMessage = async () => {
       message_type: 'dispatch_to_admin',
     }
 
-    const res = await fetch('http://localhost:8000/dispatch/send-message', {
+    const res = await fetch('${API_URL}/dispatch/send-message', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -461,7 +463,7 @@ const handleSendMessage = async () => {
         updatePayload.completed_at = new Date().toISOString()
       }
 
-      const res = await fetch(`http://localhost:8000/dispatch/requests/${selectedRequest.id}/update`, {
+      const res = await fetch(`${API_URL}/dispatch/requests/${selectedRequest.id}/update`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

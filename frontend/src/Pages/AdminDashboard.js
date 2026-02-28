@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import './AdminDashboard.css'
+import API_URL from '../config';
 
 function AdminDashboard() {
   const [currentTime, setCurrentTime] = useState(new Date())
@@ -148,7 +149,7 @@ const loadDispatchMessages = async () => {
     setLoadingMessages(true)
     const token = localStorage.getItem('adminToken') || localStorage.getItem('token')
     
-    const response = await fetch('http://localhost:8000/admin/messages', {
+    const response = await fetch('${API_URL}/admin/messages', {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -175,7 +176,7 @@ const markMessageAsRead = async (messageId) => {
   try {
     const token = localStorage.getItem('adminToken') || localStorage.getItem('token')
     
-    const response = await fetch(`http://localhost:8000/admin/messages/${messageId}/read`, {
+    const response = await fetch(`${API_URL}/admin/messages/${messageId}/read`, {
       method: 'PUT',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -893,7 +894,7 @@ const handleServiceSelection = (service, isSelected) => {
       const token =
         localStorage.getItem('adminToken') || localStorage.getItem('token')
       const response = await fetch(
-        'http://localhost:8000/admin/decrypt-medical',
+        '${API_URL}/admin/decrypt-medical',
         {
           method: 'POST',
           headers: {

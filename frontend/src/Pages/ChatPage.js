@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import './VoiceRecorder.css'
 import VoiceRecorder from './VoiceRecorder.js'
 import './ChatPage.css'
+import API_URL from '../config';
 
 function ChatPage() {
   const [messages, setMessages] = useState([])
@@ -233,7 +234,7 @@ function ChatPage() {
     setIsTyping(true)
 
     try {
-      const response = await fetch('http://localhost:8000/emergency/create', {
+      const response = await fetch('${API_URL}/emergency/create', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -348,7 +349,7 @@ function ChatPage() {
     }
 
     try {
-      const response = await fetch('http://localhost:8000/chat/store-location', {
+      const response = await fetch('${API_URL}/chat/store-location', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -419,7 +420,7 @@ function ChatPage() {
         headers['Authorization'] = `Bearer ${token}`
       }
 
-      const res = await fetch('http://localhost:8000/chat', {
+      const res = await fetch('${API_URL}/chat', {
         method: 'POST',
         headers,
         body: JSON.stringify({ 
@@ -487,7 +488,7 @@ function ChatPage() {
     if (!sessionId) return
 
     try {
-      await fetch(`http://localhost:8000/chat/session/${sessionId}`, {
+      await fetch(`${API_URL}/chat/session/${sessionId}`, {
         method: 'DELETE'
       })
     } catch (error) {

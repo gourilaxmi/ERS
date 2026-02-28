@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './DispatchProfile.css';
+import API_URL from '../config';
+
 
 function DispatchProfile() {
   const navigate = useNavigate();
@@ -19,7 +21,7 @@ function DispatchProfile() {
     
     const fetchDispatchProfile = async () => {
       try {
-        const res = await fetch("http://localhost:8000/dispatch/profile/me", {
+        const res = await fetch("${API_URL}/dispatch/profile/me", {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -78,7 +80,7 @@ function DispatchProfile() {
         vehicle_count: dispatchData.vehicleCount,
       };
 
-      const res = await fetch("http://localhost:8000/dispatch/profile/me", {
+      const res = await fetch("${API_URL}/dispatch/profile/me", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

@@ -2,6 +2,7 @@ import React, { useState, useContext } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import './Login.css'
+import API_URL from '../config';
 
 function Login() {
   const [formData, setFormData] = useState({
@@ -156,20 +157,20 @@ function Login() {
 
       // Determine endpoint and request body based on user type
       if (formData.userType === 'admin') {
-        endpoint = 'http://localhost:8000/admin/login'
+        endpoint = '${API_URL}/admin/login'
         requestBody = {
           email: formData.email.trim(),
           password: formData.password,
         }
       } else if (formData.userType === 'dispatch') {
-        endpoint = 'http://localhost:8000/dispatch/login'
+        endpoint = '${API_URL}/dispatch/login'
         requestBody = {
           username: formData.username.trim(),
           password: formData.password,
           category: formData.category,
         }
       } else {
-        endpoint = 'http://localhost:8000/login'
+        endpoint = '${API_URL}/login'
         requestBody = {
           email: formData.email.trim(),
           password: formData.password,

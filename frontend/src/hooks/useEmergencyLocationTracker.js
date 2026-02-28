@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import API_URL from '../config';
 
 export function useEmergencyLocationTracker(emergencyId, token, isActive) {
   const [isTracking, setIsTracking] = useState(false)
@@ -58,7 +59,7 @@ export function useEmergencyLocationTracker(emergencyId, token, isActive) {
 
     try {
       const response = await fetch(
-        `http://localhost:8000/emergency/${emergencyId}/update-location`,
+        `${API_URL}/emergency/${emergencyId}/update-location`,
         {
           method: 'PUT',
           headers: {

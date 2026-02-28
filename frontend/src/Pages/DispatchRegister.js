@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import './DispatchRegister.css'
+import API_URL from '../config';
 
 export default function DispatchRegister() {
   const [formData, setFormData] = useState({
@@ -39,7 +40,7 @@ export default function DispatchRegister() {
   const checkUsernameUniqueness = async (username) => {
     try {
       const response = await fetch(
-        'http://localhost:8000/dispatch/check-username',
+        '${API_URL}/dispatch/check-username',
         {
           method: 'POST',
           headers: {
@@ -220,7 +221,7 @@ export default function DispatchRegister() {
     setIsLoading(true)
 
     try {
-      const response = await fetch('http://localhost:8000/dispatch/send_otp', {
+      const response = await fetch('${API_URL}/dispatch/send_otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -262,7 +263,7 @@ export default function DispatchRegister() {
   const handleResendOtp = async () => {
     try {
       const response = await fetch(
-        'http://localhost:8000/dispatch/resend_otp',
+        '${API_URL}/dispatch/resend_otp',
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -303,7 +304,7 @@ export default function DispatchRegister() {
   }, [usernameValidationTimeout])
 
   const handleVerifyOtp = async () => {
-    const response = await fetch('http://localhost:8000/dispatch/verify_otp', {
+    const response = await fetch('${API_URL}/dispatch/verify_otp', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

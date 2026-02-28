@@ -8,12 +8,6 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
-      - key: PORT
-        value: 10000
-      - key: MONGO_URI
-        sync: false
-      - key: JWT_SECRET
-        sync: false
 
   - type: web
     name: ers-frontend
@@ -24,3 +18,7 @@ services:
     envVars:
       - key: REACT_APP_API_URL
         value: https://ers-backend.onrender.com
+      - key: REACT_APP_SUPABASE_URL
+        sync: false
+      - key: REACT_APP_SUPABASE_ANON_KEY
+        sync: false

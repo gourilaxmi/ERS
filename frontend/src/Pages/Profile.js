@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Profile.css';
+import API_URL from '../config';
 
 function Profile() {
   const navigate = useNavigate();
@@ -18,7 +19,7 @@ function Profile() {
 
     const fetchProfile = async () => {
       try {
-        const res = await fetch("http://localhost:8000/profile/me", {
+        const res = await fetch("${API_URL}/profile/me", {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -70,7 +71,7 @@ function Profile() {
         secondary_emergency_phone: profileData.emergencyContact2.split(" - ")[2],
       };
 
-      const res = await fetch("http://localhost:8000/profile/me", {
+      const res = await fetch("${API_URL}/profile/me", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import './Location.css';
+import API_URL from '../config';
+
 
 function Location() {
   const [currentLocation, setCurrentLocation] = useState(null);
@@ -115,7 +117,7 @@ const [isSearching, setIsSearching] = useState(false);
     setLoading(true);
     
     // Fetch saved locations
-    const locationsRes = await fetch("http://localhost:8000/locations", {
+    const locationsRes = await fetch("${API_URL}/locations", {
       headers: {
         Authorization: `Bearer ${localStorage.getItem("token")}`,
       },
@@ -125,7 +127,7 @@ const [isSearching, setIsSearching] = useState(false);
     if (!locationsRes.ok) throw new Error(locationsData.error || "Failed to fetch locations");
 
     // Fetch user profile (which contains home address)
-    const profileRes = await fetch("http://localhost:8000/profile/me", {
+    const profileRes = await fetch("${API_URL}/profile/me", {
       headers: {
         Authorization: `Bearer ${localStorage.getItem("token")}`,
       },
@@ -192,7 +194,7 @@ const [isSearching, setIsSearching] = useState(false);
       }
     }
 
-    const res = await fetch("http://localhost:8000/update_location", {
+    const res = await fetch("${API_URL}/update_location", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -225,7 +227,7 @@ const geocodeHomeAddress = async () => {
       const coordinates = await geocodeAddress(userProfile.address);
       
       // Update user profile with coordinates
-      const res = await fetch("http://localhost:8000/profile/update", {
+      const res = await fetch("${API_URL}/profile/update", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -274,7 +276,7 @@ useEffect(() => {
         payload.longitude = parseFloat(newLocation.lng);
       }
 
-      const res = await fetch("http://localhost:8000/locations", {
+      const res = await fetch("${API_URL}/locations", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -308,7 +310,7 @@ useEffect(() => {
     }
 
     try {
-      const res = await fetch(`http://localhost:8000/locations/${locationId}`, {
+      const res = await fetch(`${API_URL}/locations/${locationId}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -459,7 +461,7 @@ function RouteMap({ currentLocation, destination, routeData }) {
 
     try {
       setSendingLocation(true);
-      const res = await fetch("http://localhost:8000/location/send-sms", {
+      const res = await fetch("${API_URL}/location/send-sms", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -519,7 +521,7 @@ function RouteMap({ currentLocation, destination, routeData }) {
 
     setSharing(true);
     try {
-      const res = await fetch("http://localhost:8000/update_location", {
+      const res = await fetch("${API_URL}/update_location", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -547,7 +549,7 @@ function RouteMap({ currentLocation, destination, routeData }) {
   useEffect(() => {
     const fetchContacts = async () => {
       try {
-        const res = await fetch("http://localhost:8000/profile/me", {
+        const res = await fetch("${API_URL}/profile/me", {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
@@ -589,7 +591,7 @@ function RouteMap({ currentLocation, destination, routeData }) {
 
   const handleEmergencyCall = async (contact) => {  // Accept contact parameter
   try {
-    const res = await fetch("http://localhost:8000/emergency/call", {
+    const res = await fetch("${API_URL}/emergency/call", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

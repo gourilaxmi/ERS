@@ -1,4 +1,5 @@
 // backend/index.js
+import API_URL from '../config';
 const express = require('express')
 const cors = require('cors')
 const dotenv = require('dotenv')
@@ -535,7 +536,7 @@ app.post('/chat', async (req, res) => {
 
           // Call nearby services endpoint internally
           const nearbyServicesResponse = await fetch(
-            'http://localhost:8000/admin/nearby-services',
+            '${API_URL}/admin/nearby-services',
             {
               method: 'POST',
               headers: {

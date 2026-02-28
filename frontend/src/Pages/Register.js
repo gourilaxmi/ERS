@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import './Register.css'
+import API_URL from '../config';
 
 function Register() {
   const [formData, setFormData] = useState({
@@ -152,7 +153,7 @@ function Register() {
     setIsLoading(true)
 
     try {
-      const response = await fetch('http://localhost:8000/send_otp', {
+      const response = await fetch('${API_URL}/send_otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -196,7 +197,7 @@ function Register() {
   }
   const handleResendOtp = async () => {
     try {
-      const response = await fetch('http://localhost:8000/resend_otp', {
+      const response = await fetch('${API_URL}/resend_otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ phone: `+91${formData.phone}` }),
@@ -224,7 +225,7 @@ function Register() {
   }, [cooldown])
 
   const handleVerifyOtp = async () => {
-    const response = await fetch('http://localhost:8000/verify_otp', {
+    const response = await fetch('${API_URL}/verify_otp', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

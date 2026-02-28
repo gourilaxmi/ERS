@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './HomePage.css';
+import API_URL from '../config';
 
 function HomePage() {
   const [emergencyActive, setEmergencyActive] = useState(false);
@@ -65,7 +66,7 @@ const handleEmergencyClick = async () => {
         locationString = `${locationData.latitude}, ${locationData.longitude}`;
         
         // Update user's location in the database
-        const locationResponse = await fetch("http://localhost:8000/update_location", {
+        const locationResponse = await fetch("${API_URL}/update_location", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -92,7 +93,7 @@ const handleEmergencyClick = async () => {
         console.log("Current location obtained:", locationData);
       // Create emergency entry in database
       try {
-        const emergencyResponse = await fetch("http://localhost:8000/emergency/create", {
+        const emergencyResponse = await fetch("${API_URL}/emergency/create", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -118,7 +119,7 @@ const handleEmergencyClick = async () => {
       }
 
       // Make the original emergency call
-      await fetch("http://localhost:8000/emergency/call", {
+      await fetch("${API_URL}/emergency/call", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -185,7 +186,7 @@ const handleServiceEmergency = async (emergencyType) => {
         locationString = `${locationData.latitude}, ${locationData.longitude}`;
         
         // Update user's location in the database
-        const locationResponse = await fetch("http://localhost:8000/update_location", {
+        const locationResponse = await fetch("${API_URL}/update_location", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -209,7 +210,7 @@ const handleServiceEmergency = async (emergencyType) => {
 
       // Create emergency entry in database
       try {
-        const emergencyResponse = await fetch("http://localhost:8000/emergency/create", {
+        const emergencyResponse = await fetch("${API_URL}/emergency/create", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -233,7 +234,7 @@ const handleServiceEmergency = async (emergencyType) => {
       }
 
       // Make the emergency call
-      await fetch("http://localhost:8000/emergency/call", {
+      await fetch("${API_URL}/emergency/call", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -257,7 +258,7 @@ const handleServiceEmergency = async (emergencyType) => {
         const emergencyMessage = getEmergencyMessage(emergencyType);
 
         // Send emergency message to chat endpoint
-        const chatResponse = await fetch("http://localhost:8000/chat", {
+        const chatResponse = await fetch("${API_URL}/chat", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

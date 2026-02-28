@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import './AdminSettings.css'
+import API_URL from '../config';
 
 function AdminSettings() {
   const [activeTab, setActiveTab] = useState('general')
@@ -131,7 +132,7 @@ useEffect(() => {
       }
 
       // Mock API call - replace with actual API endpoint
-      const response = await fetch('http://localhost:8000/admin/settings', {
+      const response = await fetch('${API_URL}/admin/settings', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

@@ -1,4 +1,5 @@
 import React, { useRef, useState } from 'react'
+import API_URL from '../config';
 
 export default function VoiceRecorder({ onSendAudio }) {
   const mediaRecorderRef = useRef(null)
@@ -17,7 +18,7 @@ export default function VoiceRecorder({ onSendAudio }) {
       })
       
       streamRef.current = stream
-      audioChunksRef.current = [] // ✅ Clear previous chunks
+      audioChunksRef.current = [] 
 
       // Determine best MIME type
       const options = {
@@ -80,7 +81,7 @@ export default function VoiceRecorder({ onSendAudio }) {
 
           console.log(`📤 Sending: ${fileName}, ${(audioFile.size / 1024).toFixed(2)} KB`)
 
-          const res = await fetch('http://localhost:8000/transcribe', {
+          const res = await fetch('${API_URL}/transcribe', {
             method: 'POST',
             body: formData,
           })
